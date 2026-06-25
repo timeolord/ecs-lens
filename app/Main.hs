@@ -3,11 +3,13 @@
 
 module Main where
 
+import Prelude
 import Control.Monad.State
 import Control.Lens
 import Data.Default
 import Control.Monad
-import Data.Map
+import qualified Data.Map as Map
+import Data.Map (Map)
 import Control.Concurrent (threadDelay)
 
 type System m = StateT ECSState m
@@ -57,7 +59,7 @@ makeLenses ''Components
 makeLenses ''ECSState
 
 entities :: Fold ECSState Entity
-entities = folding $ \s -> view (componentsList . to keys) s
+entities = folding $ \s -> view (componentsList . to Map.keys) s
 
 nextEntityID :: Entity -> Entity
 nextEntityID (ID x) = ID $ x + 1
@@ -65,12 +67,12 @@ nextEntityID (ID x) = ID $ x + 1
 spawnEntity :: Components -> System IO Entity
 spawnEntity components = do
     x <- gets (^.currentEntityID)
-    componentsList %= insert x components
+    componentsList %= Map.insert x components
     currentEntityID += 1
     return x
 
 removeEntity :: Entity -> System IO ()
-removeEntity entity = componentsList %= delete entity
+removeEntity entity = componentsList %= Map.delete entity
 
 mainSystem :: System IO ()
 mainSystem = do
@@ -99,7 +101,7 @@ repeatingSystems = do
 
 movementSystem :: System IO ()
 movementSystem = do
-    componentsList %= fmap movement
+    componentsList %= Map.map movement
     where   movement :: Components -> Components
             movement c@(Components {_position = Just (Position (x, y)), _velocity = Just (Velocity (x', y'))})
                  = set position (clampPosition (x + x', y + y')) c
@@ -107,7 +109,7 @@ movementSystem = do
 
 collisionSystem :: System IO ()
 collisionSystem = do
-    componentsList %= fmap collision
+    componentsList %= Map.map collision
     where   collision :: Components -> Components
             collision c@(Components {_position = Just (Position (x, y)), _velocity = Just (Velocity (x', y'))})
                 | x >= xSize - 1 = set velocity (Just $ Velocity (- x', y')) c
@@ -121,7 +123,7 @@ renderSystem :: System IO ()
 renderSystem = do
     state <- get
     let grid = replicate ySize (replicate xSize ' ')
-    let grid' = foldl' renderBalls grid (view componentsList state)
+    let grid' = Prelude.foldl' renderBalls grid (view componentsList state)
     liftIO $ putStr "\ESC[2J"
     liftIO $ putStrLn $ unlines $ reverse grid'
         where   renderBalls :: [String] -> Components -> [String]
