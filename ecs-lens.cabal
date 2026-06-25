@@ -13,13 +13,13 @@ version:            0.1.0.0
 
 -- The license under which the package is released.
 -- license:
-author:             Allan
+author:             Melody
 maintainer:         timeolord6677@gmail.com
 
 -- A copyright notice.
 -- copyright:
 -- category:
-extra-source-files: CHANGELOG.md
+-- extra-source-files: CHANGELOG.md
 
 executable ecs-lens
     main-is:          Main.hs
